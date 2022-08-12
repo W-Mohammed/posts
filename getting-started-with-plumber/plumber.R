@@ -1,6 +1,7 @@
 # plumber.R
 
-# Below are the API methods and their corresponding functions, whereas the API title and description are at the end of the file.
+# Below are the API methods and their corresponding functions,
+# whereas the API title and description are at the end of the file.
 
 #* Welcome user.
 #* The API says "Hi".
