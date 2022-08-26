@@ -19,13 +19,11 @@ USER root
 RUN apk add --no-cache --update \
     bash \
     openssl \
-    ca-certificates
-
-
+    ca-certificates \
+    wget
 
 ## Install C++, g++ (compiler) and make utility:
-RUN apk update && \
-    apk add gcc \
+RUN apk add --no-cache gcc \
     make \
     g++ \
     zlib-dev \
@@ -35,11 +33,12 @@ RUN apk update && \
 # Download, build, and install Repast HPC:
 RUN mkdir /tmp/repast-hpc-src
 WORKDIR /tmp/repast-hpc-src
-RUN apk update && \
+RUN \
     ## add the ca-certificates to wget:
-    apk add ca-certificates wget && \
-    update-ca-certificates && \
-    wget https://github.com/Repast/repast.hpc/releases/download/v2.3.1/repast_hpc-2.3.1.tgz && \
+    # RUN apk add --no-cache wget == RUN apk update && apk add wget
+    # apk add ca-certificates  && \
+    # update-ca-certificates && \
+    wget github.com/Repast/repast.hpc/releases/download/v2.3.1/repast_hpc-2.3.1.tgz && \
     tar -xvzf repast_hpc-2.3.1.tgz
 
 WORKDIR /tmp/repast-hpc-src/repast_hpc-2.3.1/MANUAL_INSTALL
@@ -65,11 +64,9 @@ RUN ./install.sh rhpc
 WORKDIR /
 RUN rm -rf /tmp/*
 
-# Browse to project directory
+# Copy rhpc example files to an examples folder in a project directory:
 WORKDIR /project
-
-# Move examples into /project directory
-RUN mv /root/sfw/repast_hpc-2.3.0/bin/ /project/examples/
+RUN cp -v -T -r /root/sfw/repast_hpc-2.3.1/bin /project/examples
 
 # Declare start-up command:
 CMD ["/bin/sh"]
