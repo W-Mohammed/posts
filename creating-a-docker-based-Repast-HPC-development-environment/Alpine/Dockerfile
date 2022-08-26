@@ -2,47 +2,66 @@
 
 # Use Alpine as a base-image (layer):
 FROM alpine:3.16.2
-# Declare maintainer's name:
-LABEL "developer"="Wael Mohammed <mrwaelmohammed@gmail.com>"
-LABEL "adapted from"="https://github.com/eze1981/repast-hpc/blob/master/Dockerfile"
+
+# Declare image metadata:
+LABEL org.opencontainers.image.title="Repast for High Performance Computing (Repast HPC) 2.3.1 docker image"
+LABEL org.opencontainers.image.authors="Author(s) name <email address(es)>"
+LABEL org.opencontainers.image.source="https://github.com/W-Mohammed/posts/tree/main/creating-a-docker-based-Repast-HPC-development-environment\Alpine"
+LABEL org.opencontainers.image.base.name="https://hub.docker.com/layers/ubuntu/library/ubuntu/22.10/images/sha256-75d11da998393ed4a786917130c205967123f7ca8cddce2889fd9e3a0a69fcdd?context=explore"
+LABEL org.opencontainers.image.description="This image provides a Repast HPC development environment.\
+    The authors of this image adapted it from https://github.com/eze1981/repast-hpc/blob/master/Dockerfile "
+
 # change to root user:
-# USER root
+USER root
+
 # Dependencies:
-# Install packages:
+## Install packages:
 RUN apk add --no-cache --update \
-    ca-certificates \
+    bash \
     openssl \
-    curl
-# Install C++, g++ (compiler) and make utility:
-RUN apk update && apk add g++ make
+    ca-certificates
+
+
+
+## Install C++, g++ (compiler) and make utility:
+RUN apk update && \
+    apk add gcc \
+    make \
+    g++ \
+    zlib-dev \
+    git
+
 # Repast:
-# Download, build, and install Repast HPC
+# Download, build, and install Repast HPC:
 RUN mkdir /tmp/repast-hpc-src
 WORKDIR /tmp/repast-hpc-src
-RUN wget https://github.com/Repast/repast.hpc/releases/download/v2.3.1/repast_hpc-2.3.1.tgz \
-    && tar -xvzf repast_hpc-2.3.1.tgz
+RUN apk update && \
+    ## add the ca-certificates to wget:
+    apk add ca-certificates wget && \
+    update-ca-certificates && \
+    wget https://github.com/Repast/repast.hpc/releases/download/v2.3.1/repast_hpc-2.3.1.tgz && \
+    tar -xvzf repast_hpc-2.3.1.tgz
+
+WORKDIR /tmp/repast-hpc-src/repast_hpc-2.3.1/MANUAL_INSTALL
+
+# Copy the shell file from GitHb:
+COPY install_alpine.sh .
+
+# Add MPICH bin to the PATH:
+ENV PATH="/root/sfw/MPICH/bin:${PATH}"
 
 # Install curl:
-# WORKDIR /tmp/repast-hpc-src/repast_hpc-2.3.1/MANUAL_INSTALL
-# RUN ./install.sh curl
-
+RUN ./install.sh curl
 # Install mpich:
-WORKDIR /tmp/repast-hpc-src/repast_hpc-2.3.1/MANUAL_INSTALL
-RUN sh ./install.sh mpich
-
+RUN ./install.sh mpich 
 # Install NetCDF:
-WORKDIR /tmp/repast-hpc-src/repast_hpc-2.3.1/MANUAL_INSTALL
-RUN sh ./install.sh netcdf
-
+RUN ./install.sh netcdf
 # Install Boost:
-WORKDIR /tmp/repast-hpc-src/repast_hpc-2.3.1/MANUAL_INSTALL
-RUN sh ./install.sh boost
-
+RUN ./install.sh boost
 # Install Repast HPC:
-WORKDIR /tmp/repast-hpc-src/repast_hpc-2.3.1/MANUAL_INSTALL
-RUN sh ./install.sh rhpc
+RUN ./install.sh rhpc
 
-# Clean up
+# Clean up:
 WORKDIR /
 RUN rm -rf /tmp/*
 
