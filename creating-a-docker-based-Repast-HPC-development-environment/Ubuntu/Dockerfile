@@ -1,6 +1,6 @@
 # Dockerfile
 
-# This dockerfile contains the instructions required to build a Repast HPC image. 
+# This dockerfile contains the instructions required to build a Repast HPC image powered by Ubuntu Linux. 
 
 # Declare the version of ubuntu's base image:
 ARG UBUNTU_VERSION="22.10"
