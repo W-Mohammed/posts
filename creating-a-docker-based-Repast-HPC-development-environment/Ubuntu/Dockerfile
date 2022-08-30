@@ -87,4 +87,4 @@ WORKDIR /project
 RUN cp -v -T -r /root/sfw/repast_hpc-${RHPC_VERSION}/bin /project/examples
 
 # Declare start-up command:
-CMD ["/bin/sh"]
+CMD ["/bin/bash"]
