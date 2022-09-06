@@ -3,6 +3,7 @@
 library(dampack)
 library(readr)
 library(assertthat)
+library(plumber)
 
 #* @apiTitle Client API hosting sensitive data
 #* 
@@ -11,6 +12,47 @@ library(assertthat)
 #* economic model using it, and wants that consultant to be able to run 
 #* the model for various inputs 
 #* (while holding certain inputs fixed and leaving them unknown).
+
+#* Log some information about the incoming request
+#* @filter logger
+function(req){
+  cat(as.character(Sys.time()), "-",
+      req$REQUEST_METHOD, "-", req$PATH_INFO, "-",
+      req$HTTP_USER_AGENT, "@", req$REMOTE_ADDR, "\n")
+  plumber::forward()
+}
+
+#* @filter checkAuth
+function(req, res, API_key = "R-HTA-220519") {
+  # test <<- req
+  ## Forward requests coming to swagger endpoints:----
+  if (grepl("docs", tolower(req$PATH_INFO)) 
+      | grepl("openapi", tolower(req$PATH_INFO))) return(plumber::forward())
+  
+  ## Check requests coming to other endpoints:----
+  key <- NULL
+  if (!is.null(req$HEADERS['authorization'])) {
+    key <- req$HEADERS['authorization']
+  }
+  
+  if (is.null(req$HEADERS['authorization']) | is.na(key)) {
+    res$status <- 401 # Unauthorized
+    return(list(error="Authentication required"))
+  } else if (!is.null(key)) {
+    if(!is.na(key)) {
+      if(key != API_key) {
+        res$status <- 404 # Unauthorized
+        return(list(error="Un-authorized user"))
+      } else {
+        plumber::forward()
+      }
+    } else {
+      plumber::forward()
+    }
+  } else {
+    plumber::forward()
+  }
+}
 
 #* Run the DARTH model
 #* @serializer csv
@@ -37,14 +79,14 @@ function(path_to_psa_inputs = "parameter_distributions.csv",
   
   # for each row of the data-frame containing the variables to be changed...
   for(n in 1:nrow(param_updates)){
-  
-  # update parameters from API input
-  psa_inputs <- overwrite_parameter_value(
-                            existing_df = psa_inputs,
-                            parameter = param_updates[n,"parameter"], 
-                            distribution = param_updates[n,"distribution"],
-                            v1 = param_updates[n,"v1"],
-                            v2 = param_updates[n,"v2"])
+    
+    # update parameters from API input
+    psa_inputs <- overwrite_parameter_value(
+      existing_df = psa_inputs,
+      parameter = param_updates[n,"parameter"], 
+      distribution = param_updates[n,"distribution"],
+      v1 = param_updates[n,"v1"],
+      v2 = param_updates[n,"v2"])
   }
   
   # run the model using the single run-model function.
@@ -64,11 +106,17 @@ function(path_to_psa_inputs = "parameter_distributions.csv",
   # searches through the results data-frame for any of the parameter names,
   # if any exist they will flag a TRUE, therefore we assert that all = F
   assertthat::assert_that(all(psa_inputs[, 1] %in%
-        as.character(unlist(x = results,
-                            recursive = T)) == F))
+                                as.character(unlist(x = results,
+                                                    recursive = T)) == F))
   
   return(results)
   
 }
 
-
+#* A brief abstract
+#* @preempt checkAuth
+#* @serializer contentType list(type="application/html")
+#* @get /about
+function(res) {
+  include_rmd("abstract.Rmd", res)
+}
