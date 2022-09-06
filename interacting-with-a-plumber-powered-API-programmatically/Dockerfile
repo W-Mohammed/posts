@@ -9,6 +9,6 @@ RUN R -e "pacman::p_load('assertthat', 'dampack', 'ggplot2', 'jsonlite', 'readr'
 # Create a working directory in the container:
 WORKDIR /api
 # Copy API files to the created working directory in the container:
-COPY ./interacting-with-a-plumber-powered-API-programmatically/API_files/ /api
+COPY ./interacting-with-a-plumber-powered-API-programmatically/RobertASmithBresMed-plumberHE-809f204/darthAPI /api
 # Specify the commands to run once the container runs: 
 CMD ["/api/plumber.R"]
