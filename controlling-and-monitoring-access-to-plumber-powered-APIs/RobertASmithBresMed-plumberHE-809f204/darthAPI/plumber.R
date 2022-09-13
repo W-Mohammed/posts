@@ -12,6 +12,62 @@ library(assertthat)
 #* the model for various inputs 
 #* (while holding certain inputs fixed and leaving them unknown).
 
+#* Log some information about the incoming request
+#* @filter logger
+function(req) {
+  cat(
+    "Time: ", as.character(Sys.time()), "\n",
+    "HTTP verb: ", req$REQUEST_METHOD, "\n",
+    "Endpoint: ", req$PATH_INFO, "\n",
+    "Request issuer: ", req$HTTP_USER_AGENT, "@", req$REMOTE_ADDR, "\n"
+  )
+  plumber::forward()
+}
+
+#* Check user's credentials in the incoming request
+#* @filter security
+function(req, res, API_key = "R-HTA-220908") {
+  ## Forward requests coming to swagger endpoints:
+  if (grepl("docs", tolower(req$PATH_INFO)) |
+    grepl("openapi", tolower(req$PATH_INFO))) {
+    return(plumber::forward())
+  }
+
+  ## Check requests coming to other endpoints:
+  ### Grab the key passed in the HEADERS list:
+  key <- NULL
+  if (!is.null(req$HEADERS["key"])) {
+    key <- req$HEADERS["key"]
+  }
+  ### Check the key passed through with the request object, if any:
+  if (is.null(key) | is.na(key)) {
+    #### Unauthorised users:
+    res$status <- 401 # Unauthorised
+    #### Log outcome:
+    cat(
+      "Authorisation status: 401. API key missing! \n"
+    )
+    return(list(error = "Authentication required. Please add your API key to the HEADER object using the 'key' value and/or contact API administrator."))
+  } else {
+    #### Correct credentials:
+    if (key == API_key) {
+      #### Log outcome:
+      cat(
+        "Authorisation status: authorised - API key accepted! \n"
+      )
+      plumber::forward()
+    } else {
+      #### Incorrect credentials:
+      res$status <- 403 # Forbidden
+      #### Log outcome:
+      cat(
+        "Authorisation status: 403. API key incorrect! \n"
+      )
+      return(list(error = "Authentication failed. Please make sure you have authorisation to access the API and/or contact API administrator."))
+    }
+  }
+}
+
 #* Run the DARTH model
 #* @serializer csv
 #* @param path_to_psa_inputs is the path of the csv
@@ -71,4 +127,9 @@ function(path_to_psa_inputs = "parameter_distributions.csv",
   
 }
 
-
+#* Scientific paper
+#* @preempt security
+#* @get /paper
+function(){
+  return("https://wellcomeopenresearch.org/articles/7-194")
+}

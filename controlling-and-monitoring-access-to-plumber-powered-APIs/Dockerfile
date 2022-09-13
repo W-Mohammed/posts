@@ -11,4 +11,4 @@ WORKDIR /api
 # Copy API files to the created working directory in the container:
 COPY ./RobertASmithBresMed-plumberHE-809f204/darthAPI /api
 # Specify the commands to run once the container runs: 
-CMD ["/api/plumber.R"]
+CMD ["./plumber.R"]
