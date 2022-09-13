@@ -1,0 +1,58 @@
+on:
+  push:
+    branches:
+    - main
+  schedule:
+    - cron: '1 1 1 * *'
+
+name: Run DARTH model on client API
+jobs:
+  createPullRequest:
+    runs-on: windows-2019
+    env:
+      GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
+  # Load repo and install R
+    steps:
+    - uses: actions/checkout@master
+    - uses: r-lib/actions/setup-r@master
+    
+    - name: Setup pandoc
+      uses: r-lib/actions/setup-pandoc@v2
+      with:
+        pandoc-version: '2.17.1.1'
+    
+    - name: Install TinyTeX
+      uses: r-lib/actions/setup-tinytex@v2
+      env:
+          # install full prebuilt version
+          TINYTEX_INSTALLER: TinyTeX
+
+    - name: Install dependencies
+      run: |
+          install.packages(
+          c("reshape2","jsonlite","httr", "readr", "rmarkdown", "markdown")
+          )
+          install.packages(
+          "scales", dependencies = TRUE, repos = 'http://cran.rstudio.com/' 
+          )
+          install.packages(
+          "ggplot2", dependencies = TRUE, repos = 'http://cran.rstudio.com/'
+          )
+      shell: Rscript {0} 
+
+    - name: Run the model from API and create report
+      env: 
+         CONNECT_KEY: ${{secrets.PLUMBER_SECRET}}
+      run: |
+          source("scripts/run_darthAPI.R")
+      shell: Rscript {0} 
+
+    - name: Create Pull Request
+      uses: peter-evans/create-pull-request@v3
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+        commit-message: Automated Model Run from API
+        title: 'Living HTA Automated Model Run'
+        body: >
+          Automated model run
+        labels: report, automated pr
