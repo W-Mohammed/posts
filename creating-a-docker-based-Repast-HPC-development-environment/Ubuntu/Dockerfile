@@ -67,14 +67,6 @@ RUN ./install.sh rhpc
 RUN apt remove -y build-essential && \
     apt autoremove -y
 
-# Pass the libraries directories to ld
-RUN ldconfig /root/sfw/CURL/lib/ \
-    /root/sfw/MPICH/lib/ \
-    /root/sfw/NetCDF/lib/ \
-    /root/sfw/NetCDF-cxx/lib/ \
-    /root/sfw/repast_hpc-2.3.1/lib/ \
-    /root/sfw/Boost/Boost_1.61/lib/
-
 # Remove unneeded files:
 WORKDIR /
 RUN rm -rf tmp

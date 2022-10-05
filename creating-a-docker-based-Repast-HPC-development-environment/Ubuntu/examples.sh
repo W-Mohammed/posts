@@ -22,11 +22,6 @@ then
   echo " "
   echo "finished running the Zombies ABM model"
   echo " "
-  echo "leaving directory to '/project/examples/zombie' ..."
-  cd /
-  echo "jumping back to the '/project' folder ..."
-  cd project
-
 fi
 
 # Rumor:
@@ -46,8 +41,4 @@ then
   echo " "
   echo "finished running the Rumor ABM model"
   echo " "
-  echo "leaving directory to '/project/examples/rumor' ..."
-  cd /
-  echo "jumping back to the '/project' folder ..."
-  cd project
 fi
